@@ -1,11 +1,13 @@
 const mapDBToModelAlbums = ({
   id,
   name,
-  year
+  year,
+  cover
 }) => ({
   id,
   name,
-  year
+  year,
+  coverUrl: cover
 })
 
 const mapDBToModelMusics = ({

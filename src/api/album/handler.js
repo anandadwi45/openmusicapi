@@ -1,9 +1,10 @@
 const autoBind = require('auto-bind')
 
 class AlbumsHandler {
-  constructor (service, validator) {
+  constructor (service, validator, musicsServices) {
     this._service = service
     this._validator = validator
+    this._musicsService = musicsServices
 
     autoBind(this)
   }
@@ -28,6 +29,7 @@ class AlbumsHandler {
   async getAlbumByIdHandler (request, h) {
     const { id } = request.params
     const album = await this._service.getAlbumById(id)
+    album.songs = await this._musicsService.getMusicByAlbumId(id)
     return {
       status: 'success',
       data: {
@@ -56,6 +58,49 @@ class AlbumsHandler {
       status: 'success',
       message: 'Album berhasil dihapus'
     }
+  }
+
+  async postLikesAlbumHandler (request, h) {
+    const { id } = request.params
+    const { id: credentialId } = request.auth.credentials
+
+    await this._service.checkAlbum(id)
+
+    const like = await this._service.addLikeAndDislikeAlbum(id, credentialId)
+
+    return h.response({
+      status: 'success',
+      message: `Berhasil ${like} Album`
+    }).code(201)
+  }
+
+  async getLikesAlbumByIdhandler (request, h) {
+    const { id } = request.params
+    const { likes, source } = await this._service.getLikesAlbumById(id)
+
+    const response = h.response({
+      status: 'success',
+      data: {
+        likes
+      }
+    })
+
+    response.header('X-Data-Source', source)
+    return response
+  }
+
+  async deleteLikesAlbumByIdhandler (request, h) {
+    const { id } = request.params
+    const { id: credentialId } = request.auth.credentials
+
+    await this._service.checkAlbum(id)
+
+    await this._service.unlikeAlbumById(id, credentialId)
+
+    return h.response({
+      status: 'success',
+      message: 'Album batal disukai'
+    }).code(200)
   }
 }
 
